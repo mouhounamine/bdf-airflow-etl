@@ -1,2 +1,10 @@
 dags/__pycache__/
 logs/
+node_modules/
+front/node_modules
+front/.next
+
+.env
+backend/uploads/
+
+/iac/cloudformation/command_to_deploy.sh
