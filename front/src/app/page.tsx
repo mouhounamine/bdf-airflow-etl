@@ -87,7 +87,7 @@ export default function Home() {
         </a>
         <a
           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://eu-west-3.console.aws.amazon.com/s3/buckets/bigdata-bdml2-project-bucket"
+          href="http://localhost:9870/"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -98,7 +98,7 @@ export default function Home() {
             width={16}
             height={16}
           />
-          Accéder au bucket S3
+          Accéder à l'interface HDFS
         </a>
       </footer>
     </div>

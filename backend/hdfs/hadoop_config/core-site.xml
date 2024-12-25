@@ -1,0 +1,29 @@
+<configuration>
+  <!-- Configuration de base du système Hadoop -->
+  <property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://namenode:9000</value>
+  </property>
+
+  <!-- Activer WebHDFS (HTTP pour interagir avec HDFS) -->
+  <property>
+    <name>hadoop.http.staticuser.user</name>
+    <value>dr.who</value>
+  </property>
+
+  <property>
+    <name>webhdfs.rest.port</name>
+    <value>9870</value> <!-- Port pour WebHDFS -->
+  </property>
+
+  <!-- Permet à tous les utilisateurs d’accéder à WebHDFS -->
+  <property>
+    <name>hadoop.security.authorization</name>
+    <value>false</value>
+  </property>
+
+  <property>
+    <name>hadoop.security.authentication</name>
+    <value>SIMPLE</value> <!-- Utilisation d'une authentification simple -->
+  </property>
+</configuration>

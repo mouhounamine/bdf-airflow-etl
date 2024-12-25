@@ -12,10 +12,10 @@ x-airflow-common: &airflow-common
     AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
     AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
   volumes:
-    - ./backend/dags:/opt/airflow/dags
-    - ./backend/logs:/opt/airflow/logs
-    - ./backend/plugins:/opt/airflow/plugins
-    - ./backend/uploads:/app/uploads # Montage du repertoire uploads où vont etre chargé les fichiers csv temporairement avec d'etre envoyés dans S3
+    - ./backend/airflow/dags:/opt/airflow/dags
+    - ./backend/airflow/logs:/opt/airflow/logs
+    - ./backend/airflow/plugins:/opt/airflow/plugins
+    - ./backend/airflow/uploads:/app/uploads # Montage du répertoire uploads où vont être chargés les fichiers csv temporairement avant d'être envoyés dans S3
   user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
   depends_on:
     postgres:
@@ -55,7 +55,6 @@ services:
 
   airflow-init:
     <<: *airflow-common
-    command: version
     environment:
       <<: *airflow-common-env
       _AIRFLOW_DB_UPGRADE: "true"
@@ -63,12 +62,26 @@ services:
       _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
       _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
 
+  airflow-setup:
+    image: apache/airflow:2.0.1
+    <<: *airflow-common
+    depends_on:
+      airflow-webserver:
+        condition: service_healthy
+      airflow-scheduler:
+        condition: service_started
+    entrypoint: ["/bin/bash"]
+    command: ["/opt/airflow/init-airflow.sh"]
+    volumes:
+      - ./backend/airflow:/opt/airflow
+    restart: "no"
+
   # Flask API service for handling file uploads
   flask-app:
     build:
       context: ./backend/api/ # Chemin vers le Dockerfile
     volumes:
-      - ./backend/uploads:/app/uploads
+      - ./backend/airflow/uploads:/app/uploads
     ports:
       - "5000:5000" # API port
     environment:
@@ -77,6 +90,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     depends_on:
       - airflow-webserver
+      - namenode
 
   # Frontend React + Next.js application
   frontend:
@@ -91,6 +105,84 @@ services:
     volumes:
       - /app/.next # Permet de préserver le build généré par Next.js
 
+  # Hadoop NameNode service
+  namenode:
+    build:
+      context: ./backend/hdfs/namenode # Assurez-vous que le Dockerfile est ici
+    container_name: namenode
+    hostname: namenode
+    environment:
+      - HADOOP_HOME=/opt/hadoop
+    volumes:
+      - ./backend/hdfs/hadoop_config:/opt/hadoop/etc/hadoop # Correctement spécifié
+      - ./backend/hdfs/namenode/start-hdfs.sh:/start-hdfs.sh # Assurez-vous que le fichier est bien là
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    command: ["/bin/bash", "/start-hdfs.sh"] # Utilise le script dans /start-hdfs.sh
+    restart: always
+
+  # Hadoop DataNode service
+  datanode:
+    build:
+      context: ./backend/hdfs/datanode # Chemin vers le Dockerfile du DataNode
+    container_name: datanode
+    hostname: datanode
+    environment:
+      - HADOOP_HOME=/opt/hadoop
+    volumes:
+      - ./backend/hdfs/hadoop_config:/opt/hadoop/etc/hadoop
+      - ./backend/hdfs/datanode/init-datanode.sh:/init-datanode.sh
+    depends_on:
+      - namenode
+    command: ["/bin/bash", "/init-datanode.sh"]
+    restart: always
+
+  # Service Hive Metastore
+  hive-metastore:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive-metastore
+    hostname: hive-metastore
+    environment:
+      HIVE_METASTORE_USER: hiveuser
+      HIVE_METASTORE_PASSWORD: hivepassword
+      HIVE_METASTORE_DB: hive
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+    depends_on:
+      namenode:
+        condition: service_started
+      airflow-webserver:
+        condition: service_started
+    ports:
+      - "9083:9083"
+    volumes:
+      - ./backend/hdfs/hive:/opt/hive/conf
+    command: /opt/hive/bin/hive --service metastore
+    restart: always
+
+  # Service HiveServer2
+  hive-server2:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive-server2
+    hostname: hive-server2
+    environment:
+      HIVE_METASTORE_USER: airflow
+      HIVE_METASTORE_PASSWORD: airflow
+      HIVE_METASTORE_DB: hive
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+    depends_on:
+      hive-metastore:
+        condition: service_started
+    ports:
+      - "10000:10000" # Port HiveServer2
+    volumes:
+      - ./backend/hdfs/hive:/opt/hive/conf # Configuration Hive
+    command: /opt/hive/bin/hive --service hiveserver2
+    restart: always
+
 volumes:
   postgres-db-volume: {}
   uploads: {}
+  hadoop_datanode: {}
