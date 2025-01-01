@@ -3,6 +3,7 @@ logs/
 node_modules/
 front/node_modules
 front/.next
+pysparkenv
 
 .env
 backend/uploads/
