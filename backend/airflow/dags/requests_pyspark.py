@@ -13,6 +13,10 @@ def main():
     csv_path = "backend/airflow/data/raw/vgchartz-2024.csv"
     df = spark.read.csv(csv_path, header=True, inferSchema=True)
 
+    # OU : Chargement du fichier CSV depuis Hiveb (remplacer le nom de la table par le bon nom)
+    df = spark.table("db_videogames.raw_vg_sales")
+
+
     # 3. Aperçu des données
     df.show(5)
     df.printSchema()
