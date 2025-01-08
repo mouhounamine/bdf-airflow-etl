@@ -1,0 +1,48 @@
+<configuration>
+  <!-- Configurer les répertoires pour les données HDFS -->
+  <property>
+    <name>dfs.namenode.name.dir</name>
+    <value>/opt/hadoop/hdfs/namenode</value> <!-- Répertoire pour les données du NameNode -->
+  </property>
+
+  <property>
+    <name>dfs.datanode.data.dir</name>
+    <value>/opt/hadoop/hdfs/datanode</value> <!-- Répertoire pour les données du DataNode -->
+  </property>
+
+  <!-- Configuration des permissions des répertoires HDFS -->
+  <property>
+    <name>dfs.permissions</name>
+    <value>false</value> <!-- Désactive la gestion des permissions -->
+  </property>
+
+  <!-- Nombre de répliques des blocs HDFS -->
+  <property>
+    <name>dfs.replication</name>
+    <value>1</value> <!-- Réplication à 1 pour simplification -->
+  </property>
+
+  <!-- WebHDFS -->
+  <property>
+    <name>dfs.webhdfs.enabled</name>
+    <value>true</value> <!-- Active WebHDFS -->
+  </property>
+
+  <!-- Activer l'accès complet -->
+  <property>
+    <name>dfs.webhdfs.allowed</name>
+    <value>*</value> <!-- Permet l'accès à tous les utilisateurs -->
+  </property>
+
+  <!-- Permet d'ajouter des utilisateurs au système de fichiers HDFS -->
+  <property>
+    <name>dfs.namenode.acl.default</name>
+    <value>amine</value> <!-- Donne par défaut des permissions à l'utilisateur amine -->
+  </property>
+  
+  <property>
+    <name>dfs.block.size</name>
+    <value>134217728</value> <!-- Taille des blocs en octets (ici 128 MB) -->
+  </property>
+
+</configuration>

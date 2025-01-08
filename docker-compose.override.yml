@@ -41,6 +41,39 @@ services:
       - spark-master
     networks:
       - airflow
+  namenode:
+    image: apache/hadoop:3.4.1
+    container_name: namenode
+    hostname: namenode
+    user: root
+    environment:
+      - HADOOP_HOME=/opt/hadoop
+    volumes:
+      - ./backend/hdfs/namenode/hadoop_namenode:/opt/hadoop/data/nameNode
+      - ./backend/hdfs/hadoop_config:/opt/hadoop/etc/hadoop
+      - ./backend/hdfs/namenode/start-hdfs.sh:/start-hdfs.sh
+    ports:
+      - "9870:9870"
+    command: ["/bin/bash", "/start-hdfs.sh"]
+    networks:
+      - airflow
+
+  datanode:
+    image: apache/hadoop:3.4.1
+    container_name: datanode
+    hostname: datanode
+    user: root
+    environment:
+      - HADOOP_HOME=/opt/hadoop
+    volumes:
+      - ./backend/hdfs/datanode/hadoop_datanode:/opt/hadoop/data/dataNode
+      - ./backend/hdfs/hadoop_config:/opt/hadoop/etc/hadoop
+      - ./backend/hdfs/datanode/init-datanode.sh:/init-datanode.sh
+    depends_on:
+      - namenode
+    command: ["/bin/bash", "/init-datanode.sh"]
+    networks:
+      - airflow
 
 volumes:
   spark-data:
