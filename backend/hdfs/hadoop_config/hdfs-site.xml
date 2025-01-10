@@ -44,5 +44,4 @@
     <name>dfs.block.size</name>
     <value>134217728</value> <!-- Taille des blocs en octets (ici 128 MB) -->
   </property>
-
 </configuration>

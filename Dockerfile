@@ -5,8 +5,7 @@ USER root
 RUN apt-get update && \
     apt-get install -y build-essential krb5-user libkrb5-dev
 
-RUN pip install apache-airflow-providers-apache-hdfs
-
+RUN pip install apache-airflow-providers-apache-hdfs apache-airflow
 
 # Installer pour faire tourner les jobs Spark
 # Installer OpenJDK-17

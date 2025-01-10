@@ -42,7 +42,7 @@ services:
     networks:
       - airflow
   namenode:
-    image: apache/hadoop:3.4.1
+    image: apache/hadoop:3.3.5
     container_name: namenode
     hostname: namenode
     user: root
@@ -59,7 +59,7 @@ services:
       - airflow
 
   datanode:
-    image: apache/hadoop:3.4.1
+    image: apache/hadoop:3.3.5
     container_name: datanode
     hostname: datanode
     user: root
@@ -72,6 +72,32 @@ services:
     depends_on:
       - namenode
     command: ["/bin/bash", "/init-datanode.sh"]
+    networks:
+      - airflow
+
+  flask-app:
+    build:
+      context: ./backend/api/
+    volumes:
+      - ./backend/airflow/uploads:/app/uploads
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_APP: app.py
+    depends_on:
+      - namenode
+    networks:
+      - airflow
+
+  frontend:
+    build:
+      context: ./front
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+    volumes:
+      - /app/.next
     networks:
       - airflow
 
